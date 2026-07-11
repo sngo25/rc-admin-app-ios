@@ -24,6 +24,8 @@ final class AuthManager {
         httpClient.onSessionExpired = { [weak self] in
             self?.handleSessionExpired()
         }
+
+        PushNotificationManager.shared.configure(httpClient: httpClient)
     }
 
     func restoreSession() async {
@@ -67,6 +69,7 @@ final class AuthManager {
     }
 
     func logout() async {
+        await PushNotificationManager.shared.unregister()
         await authAPI.logout()
         state = .unauthenticated
     }
@@ -75,6 +78,10 @@ final class AuthManager {
         if UserRole.isAllowed(user.role) {
             AppLogger.authInfo("Authenticated user \(user.id) (\(user.name))")
             state = .authenticated(user)
+            Task {
+                await PushNotificationManager.shared.requestPermissionAndRegister()
+                await PushNotificationManager.shared.syncTokenIfNeeded()
+            }
         } else {
             AppLogger.authWarning(
                 "Access denied for user \(user.id) role=\(user.role) (requires admin or moderator)"

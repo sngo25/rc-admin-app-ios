@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AC7CCCF33002443500093B4D /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = AC7CCB512002020000093B4D /* FirebaseCore */; };
+		AC7CCCF43002443500093B4D /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = AC7CCB522002020000093B4D /* FirebaseMessaging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		AC7CCB303002008E00093B4D /* CVNLAdmin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CVNLAdmin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC7CCB403002020000093B4D /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -26,6 +31,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC7CCCF43002443500093B4D /* FirebaseMessaging in Frameworks */,
+				AC7CCCF33002443500093B4D /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,6 +86,8 @@
 			);
 			name = CVNLAdmin;
 			packageProductDependencies = (
+				AC7CCB512002020000093B4D /* FirebaseCore */,
+				AC7CCB522002020000093B4D /* FirebaseMessaging */,
 			);
 			productName = CVNLAdmin;
 			productReference = AC7CCB303002008E00093B4D /* CVNLAdmin.app */;
@@ -108,6 +117,9 @@
 			);
 			mainGroup = AC7CCB273002008E00093B4D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AC7CCB502002020000093B4D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AC7CCB313002008E00093B4D /* Products */;
 			projectDirPath = "";
@@ -265,6 +277,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/CVNLAdmin.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U6WGRPDG6G;
@@ -298,6 +311,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/CVNLAdmin.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U6WGRPDG6G;
@@ -348,6 +362,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AC7CCB502002020000093B4D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AC7CCB512002020000093B4D /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC7CCB502002020000093B4D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		AC7CCB522002020000093B4D /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC7CCB502002020000093B4D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AC7CCB283002008E00093B4D /* Project object */;
 }

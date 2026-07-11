@@ -69,9 +69,36 @@ final class HTTPClient {
         body: Body,
         isRetry: Bool = false
     ) async throws {
+        try await commandRequest(
+            path: path,
+            method: "POST",
+            body: body,
+            isRetry: isRetry
+        )
+    }
+
+    func deleteCommand<Body: Encodable>(
+        path: String,
+        body: Body,
+        isRetry: Bool = false
+    ) async throws {
+        try await commandRequest(
+            path: path,
+            method: "DELETE",
+            body: body,
+            isRetry: isRetry
+        )
+    }
+
+    private func commandRequest<Body: Encodable>(
+        path: String,
+        method: String,
+        body: Body,
+        isRetry: Bool
+    ) async throws {
         let url = try makeURL(path: path, queryItems: [])
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(
             ClientConfig.nativeClientValue,
@@ -84,6 +111,8 @@ final class HTTPClient {
 
         request.httpBody = try JSONEncoder().encode(body)
 
+        AppLogger.networkInfo("\(method) \(url.absoluteString)")
+
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -91,7 +120,30 @@ final class HTTPClient {
             throw APIError.invalidResponse
         }
 
-        logResponse(method: "POST", url: url, statusCode: httpResponse.statusCode, data: data)
+        logResponse(method: method, url: url, statusCode: httpResponse.statusCode, data: data)
+
+        if httpResponse.statusCode == 401,
+           !isRetry,
+           !sessionInvalidated,
+           path != "/auth/refresh",
+           path != "/auth/login"
+        {
+            let didRefresh = try await refreshAccessToken()
+
+            if didRefresh {
+                try await commandRequest(
+                    path: path,
+                    method: method,
+                    body: body,
+                    isRetry: true
+                )
+                return
+            }
+        }
+
+        if httpResponse.statusCode == 401 {
+            throw APIError.unauthorized
+        }
 
         guard (200 ... 299).contains(httpResponse.statusCode) else {
             throw APIError.httpStatus(httpResponse.statusCode)
@@ -101,7 +153,7 @@ final class HTTPClient {
             let envelope = try decoder.decode(APIEnvelope<EmptyData>.self, from: data)
             try envelope.validateSuccess()
         } catch {
-            logDecodeFailure(method: "POST", url: url, data: data, error: error)
+            logDecodeFailure(method: method, url: url, data: data, error: error)
             throw error
         }
     }
