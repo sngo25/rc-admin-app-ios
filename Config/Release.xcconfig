@@ -1,0 +1,2 @@
+SERVER_URL = https:/$()/gth-talk-stranger-cfs.herokuapp.com/api
+IPHONEOS_DEPLOYMENT_TARGET = 18.0

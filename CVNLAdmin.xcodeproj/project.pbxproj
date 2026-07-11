@@ -8,6 +8,9 @@
 
 /* Begin PBXFileReference section */
 		AC7CCB303002008E00093B4D /* CVNLAdmin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CVNLAdmin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC7CCB403002020000093B4D /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		AC7CCB413002020000093B4D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		AC7CCB423002020000093B4D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,9 +35,20 @@
 		AC7CCB273002008E00093B4D = {
 			isa = PBXGroup;
 			children = (
+				AC7CCB443002020000093B4D /* Config */,
 				AC7CCB323002008E00093B4D /* CVNLAdmin */,
 				AC7CCB313002008E00093B4D /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		AC7CCB443002020000093B4D /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				AC7CCB403002020000093B4D /* Debug.xcconfig */,
+				AC7CCB413002020000093B4D /* Release.xcconfig */,
+				AC7CCB423002020000093B4D /* Info.plist */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		AC7CCB313002008E00093B4D /* Products */ = {
@@ -127,6 +141,7 @@
 /* Begin XCBuildConfiguration section */
 		AC7CCB393002009200093B4D /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC7CCB403002020000093B4D /* Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -178,7 +193,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -191,6 +205,7 @@
 		};
 		AC7CCB3A3002009200093B4D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC7CCB413002020000093B4D /* Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -236,7 +251,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -256,6 +270,7 @@
 				DEVELOPMENT_TEAM = U6WGRPDG6G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +303,7 @@
 				DEVELOPMENT_TEAM = U6WGRPDG6G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
