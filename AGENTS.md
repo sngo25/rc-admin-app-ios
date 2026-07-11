@@ -33,7 +33,7 @@ Read @rc-admin-app-ios/docs/overview.md before making structural changes.
 
 - Build in Xcode: `Cmd+B`
 - Run on simulator or device: `Cmd+R`
-- Add XCTest unit/UI tests as features are implemented
+- Do not add XCTest tests unless the human asks; you may extend existing XCTest files for the area being changed
 
 ## Commit messages
 
