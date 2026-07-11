@@ -4,7 +4,7 @@ Native iOS admin app for **Random Chat** (CVNL / Seeyu). This project is the iOS
 
 ## Status
 
-Early-stage SwiftUI app with auth infrastructure and login screen. Feature parity with rc-admin-web is the long-term goal.
+Early-stage SwiftUI app with auth infrastructure, login screen, and an Alerts & notifications mock screen with shared top bar. Feature parity with rc-admin-web is the long-term goal.
 
 ## Technology Stack
 
@@ -45,7 +45,9 @@ CVNLAdmin/
 ├── Features/
 │   ├── Auth/                   # LoginView, LoginFormView, LoginBrandHeader, ForbiddenView
 │   ├── Root/                   # RootView (auth router)
-│   └── Home/                   # Post-login placeholder
+│   ├── Shell/                  # AdminTopBar (shared post-login chrome)
+│   ├── Alerts/                 # AlertsView mock screen + alert card components
+│   └── Home/                   # Post-login shell (hosts AlertsView)
 └── Assets.xcassets/
 Config/
 ├── Debug.xcconfig              # localhost server URL (simulator default)
@@ -93,6 +95,16 @@ The login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-s
 - Primary "Sign in" button (`#6E56CF`)
 - Shared color tokens live in `CVNLAdmin/Core/UI/AdminTheme.swift`
 - Password reset / forgot-password is intentionally **not** supported
+
+## Alerts screen
+
+The post-login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-standalone-2.html`):
+
+- Shared top bar: hamburger menu, screen title, purple user avatar initial
+- Summary row: unacknowledged count chip and "Acknowledge all" action
+- Alert cards with severity chips (Critical / Warning / Info), acknowledge CTA, and acknowledged metadata
+- Sample data only — local state updates until rc-admin-server alert APIs are wired
+- Menu sheet exposes Logout until a full navigation drawer is designed
 
 **Troubleshooting**
 
