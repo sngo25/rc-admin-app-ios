@@ -72,6 +72,7 @@ final class AuthManager {
 
     func logout() async {
         await PushNotificationManager.shared.unregister()
+        await AppBadgeManager.clear()
         await authAPI.logout()
         state = .unauthenticated
     }
@@ -95,5 +96,8 @@ final class AuthManager {
     private func handleSessionExpired() {
         TokenStore.clearRefreshToken()
         state = .unauthenticated
+        Task {
+            await AppBadgeManager.clear()
+        }
     }
 }

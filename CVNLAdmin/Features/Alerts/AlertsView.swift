@@ -46,6 +46,11 @@ struct AlertsView: View {
                 await loadAlerts(showLoading: false)
             }
         }
+        .onChange(of: unacknowledgedCount) { _, newCount in
+            Task {
+                await AppBadgeManager.sync(count: newCount)
+            }
+        }
     }
 
     @ViewBuilder

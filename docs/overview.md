@@ -103,6 +103,7 @@ The post-login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-
 - **Admin only** — moderators see ForbiddenView after login
 - Shared top bar: hamburger menu, screen title, purple user avatar initial
 - Summary row: unacknowledged count chip and "Acknowledge all" action
+- **App icon badge** syncs to the same unacknowledged count via `AppBadgeManager` (updates on load, push, foreground resume, and acknowledge; cleared on logout)
 - Alert cards with severity chips (Critical / Warning / Info), acknowledge CTA, and acknowledged metadata
 - Data from `GET /api/alerts`; acknowledge via `POST /api/alerts/:id/acknowledge` and `POST /api/alerts/acknowledge-all`
 - Empty inbox shows "All caught up" until alerts are created server-side
