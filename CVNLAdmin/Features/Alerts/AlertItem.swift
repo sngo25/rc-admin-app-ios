@@ -1,10 +1,11 @@
 import Foundation
 
 /// Severity level for an admin alert card.
-enum AlertSeverity: String, CaseIterable, Sendable {
-    case critical
-    case warning
-    case info
+/// Numeric values match rc-admin-server `AlertSeverity` constants.
+enum AlertSeverity: Int, CaseIterable, Sendable, Decodable {
+    case info = 0
+    case warning = 1
+    case critical = 2
 
     var label: String {
         switch self {
@@ -18,92 +19,112 @@ enum AlertSeverity: String, CaseIterable, Sendable {
     }
 }
 
-/// Local alert model used by the mock Alerts screen.
-/// Real API wiring will replace the sample fixtures later.
-struct AlertItem: Identifiable, Equatable, Sendable {
-    let id: Int
+/// Alert row returned by GET /api/alerts.
+struct AlertItem: Identifiable, Equatable, Sendable, Decodable {
+    let id: String
     let severity: AlertSeverity
     let title: String
     let message: String
-    let time: String
-    let sortOrder: Int
+    let createdAt: Date
     var isAcknowledged: Bool
     var acknowledgedBy: String?
-    var acknowledgedAt: String?
+    var acknowledgedAt: Date?
 
-    /// Unacked alerts first, then newest by sort order.
-    func sortKey() -> (Int, Int) {
-        (isAcknowledged ? 1 : 0, -sortOrder)
+    /// Display timestamp for the card header.
+    var time: String {
+        Self.displayFormatter.string(from: createdAt)
     }
-}
 
-enum AlertSampleData {
-    /// Fixed acknowledgement timestamp shown in the mock.
-    static let acknowledgementTimestamp = "Jul 11, 2026 · 15:50"
+    /// Display timestamp for the acknowledged footer.
+    var acknowledgedAtText: String? {
+        acknowledgedAt.map { Self.displayFormatter.string(from: $0) }
+    }
 
-    /// Sample alerts copied from admin-app-standalone-2.html.
-    static func alerts() -> [AlertItem] {
-        [
-            AlertItem(
-                id: 101,
-                severity: .critical,
-                title: "Payment gateway webhook failing",
-                message: "Stripe webhook delivery has failed 14 times in the last hour. Payments may not be reconciling.",
-                time: "Jul 11, 2026 · 14:32",
-                sortOrder: 6,
-                isAcknowledged: false
-            ),
-            AlertItem(
-                id: 102,
-                severity: .warning,
-                title: "Spam detection accuracy dropped",
-                message: "The auto-moderation model’s accuracy fell to 82%, below the 90% threshold. Consider reviewing recent flags manually.",
-                time: "Jul 11, 2026 · 09:05",
-                sortOrder: 5,
-                isAcknowledged: false
-            ),
-            AlertItem(
-                id: 103,
-                severity: .warning,
-                title: "Approved queue backlog exceeds 500 items",
-                message: "There are 512 approved confessions waiting to be posted. Posting interval may need adjustment.",
-                time: "Jul 10, 2026 · 22:40",
-                sortOrder: 4,
-                isAcknowledged: false
-            ),
-            AlertItem(
-                id: 104,
-                severity: .info,
-                title: "Weekly digest sent",
-                message: "The weekly confession digest was emailed to 12,400 subscribers.",
-                time: "Jul 10, 2026 · 08:00",
-                sortOrder: 3,
-                isAcknowledged: true,
-                acknowledgedBy: "Linh",
-                acknowledgedAt: "Jul 10, 2026 · 08:15"
-            ),
-            AlertItem(
-                id: 105,
-                severity: .critical,
-                title: "Database replica lag exceeded threshold",
-                message: "Read replica lag reached 48s, above the 30s alert threshold. Resolved automatically after failover.",
-                time: "Jul 9, 2026 · 03:12",
-                sortOrder: 2,
-                isAcknowledged: true,
-                acknowledgedBy: "Sang",
-                acknowledgedAt: "Jul 9, 2026 · 03:40"
-            ),
-            AlertItem(
-                id: 106,
-                severity: .info,
-                title: "New admin account created",
-                message: "An admin account for minh.tran was created and granted moderator access.",
-                time: "Jul 8, 2026 · 11:00",
-                sortOrder: 1,
-                isAcknowledged: true,
-                acknowledgedBy: "Sang",
-                acknowledgedAt: "Jul 8, 2026 · 11:02"
-            ),
+    /// Unacked alerts first, then newest by creation time.
+    func sortKey() -> (Int, Date) {
+        (isAcknowledged ? 1 : 0, createdAt)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case severity
+        case title
+        case message
+        case createdAt
+        case isAcknowledged
+        case acknowledgedBy
+        case acknowledgedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        severity = try container.decode(AlertSeverity.self, forKey: .severity)
+        title = try container.decode(String.self, forKey: .title)
+        message = try container.decode(String.self, forKey: .message)
+        createdAt = try Self.decodeDate(
+            from: container,
+            forKey: .createdAt
+        )
+        isAcknowledged = try container.decode(Bool.self, forKey: .isAcknowledged)
+        acknowledgedBy = try container.decodeIfPresent(String.self, forKey: .acknowledgedBy)
+        acknowledgedAt = try Self.decodeOptionalDate(
+            from: container,
+            forKey: .acknowledgedAt
+        )
+    }
+
+    private static let displayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d, yyyy · HH:mm"
+        return formatter
+    }()
+
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withInternetDateTime,
+            .withFractionalSeconds,
         ]
+        return formatter
+    }()
+
+    private static let isoFormatterNoFraction: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    private static func decodeDate(
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) throws -> Date {
+        let value = try container.decode(String.self, forKey: key)
+
+        if let date = isoFormatter.date(from: value) {
+            return date
+        }
+
+        if let date = isoFormatterNoFraction.date(from: value) {
+            return date
+        }
+
+        throw DecodingError.dataCorruptedError(
+            forKey: key,
+            in: container,
+            debugDescription: "Invalid ISO 8601 date: \(value)"
+        )
+    }
+
+    private static func decodeOptionalDate(
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) throws -> Date? {
+        guard try container.decodeIfPresent(String.self, forKey: key) != nil else {
+            return nil
+        }
+
+        return try decodeDate(from: container, forKey: key)
     }
 }

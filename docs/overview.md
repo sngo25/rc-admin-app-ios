@@ -100,10 +100,12 @@ The login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-s
 
 The post-login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-standalone-2.html`):
 
+- **Admin only** — moderators see ForbiddenView after login
 - Shared top bar: hamburger menu, screen title, purple user avatar initial
 - Summary row: unacknowledged count chip and "Acknowledge all" action
 - Alert cards with severity chips (Critical / Warning / Info), acknowledge CTA, and acknowledged metadata
-- Sample data only — local state updates until rc-admin-server alert APIs are wired
+- Data from `GET /api/alerts`; acknowledge via `POST /api/alerts/:id/acknowledge` and `POST /api/alerts/acknowledge-all`
+- Empty inbox shows "All caught up" until alerts are created server-side
 - Menu sheet exposes Logout until a full navigation drawer is designed
 
 **Troubleshooting**

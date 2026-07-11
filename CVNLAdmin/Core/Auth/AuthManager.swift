@@ -15,11 +15,13 @@ final class AuthManager {
 
     private let authAPI: AuthAPI
     private let httpClient: HTTPClient
+    let alertsAPI: AlertsAPI
 
     init(authAPI: AuthAPI? = nil) {
         let httpClient = HTTPClient(baseURL: AppConfig.serverURL)
         self.httpClient = httpClient
         self.authAPI = authAPI ?? AuthAPI(httpClient: httpClient)
+        self.alertsAPI = AlertsAPI(httpClient: httpClient)
 
         httpClient.onSessionExpired = { [weak self] in
             self?.handleSessionExpired()
@@ -75,8 +77,8 @@ final class AuthManager {
     }
 
     private func setState(for user: AdminUser) {
-        if UserRole.isAllowed(user.role) {
-            AppLogger.authInfo("Authenticated user \(user.id) (\(user.name))")
+        if UserRole.isAdmin(user.role) {
+            AppLogger.authInfo("Authenticated admin \(user.id) (\(user.name))")
             state = .authenticated(user)
             Task {
                 await PushNotificationManager.shared.requestPermissionAndRegister()
@@ -84,7 +86,7 @@ final class AuthManager {
             }
         } else {
             AppLogger.authWarning(
-                "Access denied for user \(user.id) role=\(user.role) (requires admin or moderator)"
+                "Access denied for user \(user.id) role=\(user.role) (requires admin)"
             )
             state = .forbidden(user)
         }

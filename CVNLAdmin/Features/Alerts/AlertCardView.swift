@@ -81,7 +81,7 @@ struct AlertCardView: View {
             .background(AdminTheme.successBackground)
             .clipShape(RoundedRectangle(cornerRadius: 7))
 
-            if let acknowledgedBy = alert.acknowledgedBy, let acknowledgedAt = alert.acknowledgedAt {
+            if let acknowledgedBy = alert.acknowledgedBy, let acknowledgedAt = alert.acknowledgedAtText {
                 Text("by \(acknowledgedBy) · \(acknowledgedAt)")
                     .font(.system(size: 12))
                     .foregroundStyle(AdminTheme.textTertiary)
