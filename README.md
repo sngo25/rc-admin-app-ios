@@ -7,8 +7,13 @@ This project mirrors **rc-admin-web** and connects to **rc-admin-server** for mo
 ## Getting started
 
 1. Open `CVNLAdmin.xcodeproj` in Xcode.
-2. Select a simulator or device.
-3. Build and run (`Cmd+R`).
+2. Start rc-admin-server locally (`npm run dev` in rc-admin-server).
+3. Select a simulator or device.
+4. Build and run (`Cmd+R`).
+
+### Physical device
+
+On a physical iPhone, `localhost` does not reach your Mac. Copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig`, set your Mac's LAN IP (`ipconfig getifaddr en0`), and rebuild. See @rc-admin-app-ios/docs/overview.md for full steps.
 
 ## Documentation
 

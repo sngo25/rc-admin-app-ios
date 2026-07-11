@@ -41,6 +41,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		AC7CCB313002008E00093B4D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AC7CCB303002008E00093B4D /* CVNLAdmin.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		AC7CCB443002020000093B4D /* Config */ = {
 			isa = PBXGroup;
 			children = (
@@ -49,14 +57,6 @@
 				AC7CCB423002020000093B4D /* Info.plist */,
 			);
 			path = Config;
-			sourceTree = "<group>";
-		};
-		AC7CCB313002008E00093B4D /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				AC7CCB303002008E00093B4D /* CVNLAdmin.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

@@ -57,7 +57,9 @@ struct LoginFormView: View {
         do {
             try await onSubmit(username, password)
         } catch {
-            errorMessage = "Failed"
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            AppLogger.authError("Login form error: \(message)")
+            errorMessage = message.isEmpty ? "Login failed" : message
         }
 
         isLoading = false

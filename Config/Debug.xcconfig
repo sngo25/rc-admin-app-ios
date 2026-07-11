@@ -1,3 +1,6 @@
-// Debug server URL (http:/$()/ avoids // comment in xcconfig)
+// Default for simulator (http:/$()/ avoids // comment in xcconfig)
 SERVER_URL = http:/$()/localhost:3000/api
 IPHONEOS_DEPLOYMENT_TARGET = 18.0
+
+// Per-developer override for physical device. Must be last so it wins over defaults above.
+#include? "Local.xcconfig"

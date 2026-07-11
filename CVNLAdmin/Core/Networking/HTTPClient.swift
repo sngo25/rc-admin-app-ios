@@ -15,6 +15,7 @@ final class HTTPClient {
     init(baseURL: URL, session: URLSession = .shared) {
         self.baseURL = baseURL
         self.session = session
+        AppLogger.networkInfo("HTTPClient base URL: \(baseURL.absoluteString)")
     }
 
     func setAccessToken(_ token: String?) {
@@ -86,15 +87,23 @@ final class HTTPClient {
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            AppLogger.networkError("Invalid response for \(request.url?.absoluteString ?? path)")
             throw APIError.invalidResponse
         }
+
+        logResponse(method: "POST", url: url, statusCode: httpResponse.statusCode, data: data)
 
         guard (200 ... 299).contains(httpResponse.statusCode) else {
             throw APIError.httpStatus(httpResponse.statusCode)
         }
 
-        let envelope = try decoder.decode(APIEnvelope<EmptyData>.self, from: data)
-        try envelope.validateSuccess()
+        do {
+            let envelope = try decoder.decode(APIEnvelope<EmptyData>.self, from: data)
+            try envelope.validateSuccess()
+        } catch {
+            logDecodeFailure(method: "POST", url: url, data: data, error: error)
+            throw error
+        }
     }
 
     func setRefreshHandler(_ handler: @escaping () async throws -> AuthTokens) {
@@ -129,11 +138,16 @@ final class HTTPClient {
             request.httpBody = Data("{}".utf8)
         }
 
+        AppLogger.networkInfo("\(method) \(url.absoluteString)")
+
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            AppLogger.networkError("Invalid response for \(url.absoluteString)")
             throw APIError.invalidResponse
         }
+
+        logResponse(method: method, url: url, statusCode: httpResponse.statusCode, data: data)
 
         if httpResponse.statusCode == 401,
            !isRetry,
@@ -162,8 +176,39 @@ final class HTTPClient {
             throw APIError.httpStatus(httpResponse.statusCode)
         }
 
-        let envelope = try decoder.decode(APIEnvelope<T>.self, from: data)
-        return try envelope.unwrap()
+        do {
+            let envelope = try decoder.decode(APIEnvelope<T>.self, from: data)
+            return try envelope.unwrap()
+        } catch {
+            logDecodeFailure(method: method, url: url, data: data, error: error)
+            throw error
+        }
+    }
+
+    private func logResponse(method: String, url: URL, statusCode: Int, data: Data) {
+        if (200 ... 299).contains(statusCode) {
+            AppLogger.networkInfo("\(method) \(url.absoluteString) -> \(statusCode)")
+            return
+        }
+
+        AppLogger.networkError(
+            "\(method) \(url.absoluteString) -> \(statusCode): \(Self.responsePreview(data))"
+        )
+    }
+
+    private func logDecodeFailure(method: String, url: URL, data: Data, error: Error) {
+        AppLogger.networkError(
+            "Decode failed for \(method) \(url.absoluteString): \(error.localizedDescription); body: \(Self.responsePreview(data))"
+        )
+    }
+
+    private static func responsePreview(_ data: Data, maxLength: Int = 500) -> String {
+        let text = String(data: data, encoding: .utf8) ?? "<non-utf8 \(data.count) bytes>"
+        if text.count <= maxLength {
+            return text
+        }
+
+        return String(text.prefix(maxLength)) + "…"
     }
 
     private func makeURL(path: String, queryItems: [URLQueryItem]) throws -> URL {

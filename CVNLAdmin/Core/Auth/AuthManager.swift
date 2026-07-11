@@ -30,9 +30,12 @@ final class AuthManager {
         state = .checking
 
         guard TokenStore.loadRefreshToken() != nil else {
+            AppLogger.authInfo("No refresh token stored; showing login")
             state = .unauthenticated
             return
         }
+
+        AppLogger.authInfo("Restoring session from stored refresh token")
 
         do {
             try await authAPI.refresh()
@@ -40,6 +43,7 @@ final class AuthManager {
             httpClient.resetSession()
             setState(for: user)
         } catch {
+            AppLogger.authError("Session restore failed: \(error.localizedDescription)")
             TokenStore.clearRefreshToken()
             httpClient.setAccessToken(nil)
             state = .unauthenticated
@@ -47,9 +51,19 @@ final class AuthManager {
     }
 
     func login(username: String, password: String) async throws {
-        let response = try await authAPI.login(username: username, password: password)
-        httpClient.resetSession()
-        setState(for: response.user)
+        AppLogger.authInfoMasked("Login attempt for username", value: username)
+
+        do {
+            let response = try await authAPI.login(username: username, password: password)
+            httpClient.resetSession()
+            AppLogger.authInfo(
+                "Login API succeeded for user id=\(response.id) role=\(response.role)"
+            )
+            setState(for: response.user)
+        } catch {
+            AppLogger.authError("Login failed: \(error.localizedDescription)")
+            throw error
+        }
     }
 
     func logout() async {
@@ -59,8 +73,12 @@ final class AuthManager {
 
     private func setState(for user: AdminUser) {
         if UserRole.isAllowed(user.role) {
+            AppLogger.authInfo("Authenticated user \(user.id) (\(user.name))")
             state = .authenticated(user)
         } else {
+            AppLogger.authWarning(
+                "Access denied for user \(user.id) role=\(user.role) (requires admin or moderator)"
+            )
             state = .forbidden(user)
         }
     }

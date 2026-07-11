@@ -47,7 +47,8 @@ CVNLAdmin/
 │   └── Home/                   # Post-login placeholder
 └── Assets.xcassets/
 Config/
-├── Debug.xcconfig              # localhost server URL
+├── Debug.xcconfig              # localhost server URL (simulator default)
+├── Local.xcconfig.example      # template for physical device LAN IP
 ├── Release.xcconfig            # production server URL
 └── Info.plist                  # SERVER_URL, ATS for local dev
 ```
@@ -67,7 +68,25 @@ Config/
 3. Select a simulator or connected device.
 4. Build and run (`Cmd+R`).
 
-Debug builds use `http://localhost:8080/api`. Release builds use the production Heroku URL.
+Debug builds use `http://localhost:3000/api` on the simulator. Release builds use the production Heroku URL.
+
+### Physical device
+
+On a physical iPhone, `localhost` refers to the phone itself, not your Mac. To reach rc-admin-server on your machine:
+
+1. Start rc-admin-server: `npm run dev` in rc-admin-server (port 3000).
+2. Find your Mac's LAN IP: `ipconfig getifaddr en0` (use `en1` if on Ethernet/USB).
+3. Copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set your IP.
+4. Ensure Mac and iPhone are on the **same Wi-Fi**.
+5. Rebuild in Xcode (`Cmd+R`).
+
+`Config/Local.xcconfig` is gitignored so each developer can use their own IP.
+
+**Troubleshooting**
+
+- Verify from Mac: `curl http://<your-ip>:3000/api/auth/login` (expect 401/400, not connection refused).
+- macOS firewall: allow incoming connections for Node if prompted.
+- If your IP changes (different network), update `Local.xcconfig`.
 
 ## Related documentation
 
