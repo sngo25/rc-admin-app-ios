@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Alerts & notifications screen backed by rc-admin-server APIs.
 struct AlertsView: View {
@@ -34,6 +35,16 @@ struct AlertsView: View {
         }
         .task {
             await loadAlerts()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .adminAlertReceived)) { _ in
+            Task {
+                await loadAlerts(showLoading: false)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Task {
+                await loadAlerts(showLoading: false)
+            }
         }
     }
 
@@ -131,8 +142,10 @@ struct AlertsView: View {
         .padding(.vertical, 48)
     }
 
-    private func loadAlerts() async {
-        isLoading = true
+    private func loadAlerts(showLoading: Bool = true) async {
+        if showLoading {
+            isLoading = true
+        }
         errorMessage = nil
 
         do {

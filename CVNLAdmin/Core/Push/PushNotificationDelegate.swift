@@ -32,6 +32,15 @@ final class PushNotificationDelegate: NSObject, UIApplicationDelegate, UNUserNot
         AppLogger.pushError("APNs registration failed: \(error.localizedDescription)")
     }
 
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        AdminAlertPushNotification.postReceivedIfNeeded(userInfo: userInfo)
+        completionHandler(.newData)
+    }
+
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken else {
             return
@@ -46,6 +55,18 @@ final class PushNotificationDelegate: NSObject, UIApplicationDelegate, UNUserNot
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .badge, .sound]
+        AdminAlertPushNotification.postReceivedIfNeeded(
+            userInfo: notification.request.content.userInfo
+        )
+        return [.banner, .badge, .sound, .list]
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        AdminAlertPushNotification.postReceivedIfNeeded(
+            userInfo: response.notification.request.content.userInfo
+        )
     }
 }
