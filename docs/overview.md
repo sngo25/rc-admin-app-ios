@@ -40,9 +40,10 @@ CVNLAdmin/
 │   ├── Config/                 # SERVER_URL, X-RC-Client header
 │   ├── Models/                 # AdminUser, APIEnvelope, AuthTokens
 │   ├── Auth/                   # AuthManager, TokenStore, UserRole
+│   ├── UI/                     # AdminTheme color tokens
 │   └── Networking/             # HTTPClient, AuthAPI
 ├── Features/
-│   ├── Auth/                   # LoginView, LoginFormView, ForbiddenView
+│   ├── Auth/                   # LoginView, LoginFormView, LoginBrandHeader, ForbiddenView
 │   ├── Root/                   # RootView (auth router)
 │   └── Home/                   # Post-login placeholder
 └── Assets.xcassets/
@@ -82,6 +83,16 @@ On a physical iPhone, `localhost` refers to the phone itself, not your Mac. To r
 5. Rebuild in Xcode (`Cmd+R`).
 
 `Config/Local.xcconfig` is gitignored so each developer can use their own IP.
+
+## Login screen
+
+The login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-standalone.html`):
+
+- Brand header: purple "c" mark, "CVNL Admin", monospaced "confession console" subtitle
+- Welcome copy and labeled username/password fields with purple focus ring
+- Primary "Sign in" button (`#6E56CF`)
+- Shared color tokens live in `CVNLAdmin/Core/UI/AdminTheme.swift`
+- Password reset / forgot-password is intentionally **not** supported
 
 **Troubleshooting**
 
