@@ -57,6 +57,7 @@ Config/
 
 - Base URL is configured per build configuration via xcconfig (`Config/Debug.xcconfig`, `Config/Release.xcconfig`).
 - Auth uses the native client contract documented in `@rc-agents/docs/admin-native-auth.md`.
+- Each user has a single numeric role (`0` register, `1` admin, `2` moderator). Admin inherits moderator access.
 - iOS sends `X-RC-Client: ios` on all requests; refresh tokens are returned in JSON and stored in Keychain.
 - Reuse rc-admin-server endpoints; do not reimplement moderation or user-management logic on device.
 - Reference rc-admin-web API usage in `rc-admin-web/src/core/api/` when wiring new screens.

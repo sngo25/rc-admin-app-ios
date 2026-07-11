@@ -1,19 +1,16 @@
 import Foundation
 
 enum UserRole {
+    static let register = 0
     static let admin = 1
     static let moderator = 2
 
-    static func isRole(_ role: Int, in userRole: Int) -> Bool {
-        userRole > 0 && (userRole & role) == role
-    }
-
     static func isAdmin(_ role: Int) -> Bool {
-        isRole(admin, in: role)
+        role == admin
     }
 
     static func isModerator(_ role: Int) -> Bool {
-        isRole(moderator, in: role)
+        role == moderator || role == admin
     }
 
     static func isAllowed(_ role: Int) -> Bool {
