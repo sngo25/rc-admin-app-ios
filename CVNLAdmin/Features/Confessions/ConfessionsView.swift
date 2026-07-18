@@ -12,7 +12,7 @@ struct ConfessionsView: View {
     /// 1-based current page.
     @State private var currentPage = 1
     @State private var pageInput = "1"
-    @State private var filter: ConfessionFilter = .all
+    @State private var filter: ConfessionFilter = .status(.pending)
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var postDraft: String?

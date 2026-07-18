@@ -5,7 +5,7 @@ struct HomeView: View {
     let user: AdminUser
     let onLogout: () async -> Void
 
-    @State private var destination: AdminDestination = .alerts
+    @State private var destination: AdminDestination = .confessions
     @State private var isMenuPresented = false
 
     var body: some View {
