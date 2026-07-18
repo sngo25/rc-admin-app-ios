@@ -27,22 +27,29 @@ struct PageFeedItem: Identifiable, Sendable, Decodable {
         permalinkUrl ?? createdTime.timeIntervalSince1970.description
     }
 
+    /// All `#CVNL{number}` integers found in the post body (may be empty).
+    var confessionNumbers: [Int] {
+        guard let message else {
+            return []
+        }
+
+        let nsRange = NSRange(message.startIndex..., in: message)
+        let matches = Self.confessionTagRegex.matches(in: message, range: nsRange)
+
+        return matches.compactMap { match in
+            guard let range = Range(match.range(at: 1), in: message) else {
+                return nil
+            }
+            return Int(message[range])
+        }
+    }
+
     /// Parsed `#CVNL{number}` tag from the post body, or nil when absent.
     var confessionTag: String? {
-        guard let message else {
+        guard let number = confessionNumbers.first else {
             return nil
         }
-
-        guard let match = Self.confessionTagRegex.firstMatch(
-            in: message,
-            range: NSRange(message.startIndex..., in: message)
-        ),
-            let range = Range(match.range(at: 1), in: message)
-        else {
-            return nil
-        }
-
-        return "#CVNL\(message[range])"
+        return "#CVNL\(number)"
     }
 
     /// Full Facebook post message for the card body (shown as-is from the API).

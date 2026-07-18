@@ -83,7 +83,10 @@ struct AdminTopBar: View {
             .presentationBackground(.clear)
         }
         .fullScreenCover(isPresented: $isSettingsPresented) {
-            PostingSettingsSheet(store: PostingSettingsStore.shared) {
+            PostingSettingsSheet(
+                store: PostingSettingsStore.shared,
+                facebookAPI: authManager.facebookAPI
+            ) {
                 isSettingsPresented = false
             }
             .presentationBackground(.clear)

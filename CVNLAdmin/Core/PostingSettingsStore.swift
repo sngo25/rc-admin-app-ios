@@ -73,6 +73,22 @@ final class PostingSettingsStore {
         }
     }
 
+    /// Returns a non-zero `postedCount`, fetching it from the 5 newest Facebook posts when local is 0.
+    /// Leaves `postedCount` at 0 when the feed has no `#CVNL` tags.
+    @MainActor
+    func ensurePostedCount(using facebookAPI: FacebookAPI) async throws -> Int {
+        if postedCount > 0 {
+            return postedCount
+        }
+
+        let feed = try await facebookAPI.getPageFeed()
+        if let maxNumber = LatestPostedNumberResolver.maxConfessionNumber(from: feed) {
+            noteAssignedNumber(maxNumber)
+        }
+
+        return postedCount
+    }
+
     /// Records when a fan-page post was published or scheduled (web: setLastPublishTime).
     func recordPublish(at date: Date) {
         lastPostedAt = date

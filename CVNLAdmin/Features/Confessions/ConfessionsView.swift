@@ -247,6 +247,17 @@ struct ConfessionsView: View {
     /// Approve pending confession; assign next number when unset (web lastNumber + 1).
     private func approve(_ item: ConfessionItem) async {
         let store = PostingSettingsStore.shared
+
+        // When local count is missing, resolve from recent Facebook posts before assigning.
+        if item.number == 0 && store.postedCount == 0 {
+            do {
+                _ = try await store.ensurePostedCount(using: authManager.facebookAPI)
+            } catch {
+                actionError = error.localizedDescription
+                return
+            }
+        }
+
         let assignedNumber = item.number > 0 ? item.number : store.postedCount + 1
 
         do {

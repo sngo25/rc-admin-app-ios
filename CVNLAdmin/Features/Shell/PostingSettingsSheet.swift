@@ -4,11 +4,14 @@ import SwiftUI
 /// Edits local confession auto-post settings (count + interval); last posted time is read-only.
 struct PostingSettingsSheet: View {
     let store: PostingSettingsStore
+    let facebookAPI: FacebookAPI
     let onDismiss: () -> Void
 
     // Draft values so Cancel does not mutate the store.
     @State private var draftPostedCount: String = ""
     @State private var draftIntervalMinutes: String = ""
+    @State private var isFetchingPostedCount = false
+    @State private var fetchError: String?
 
     var body: some View {
         ZStack {
@@ -36,8 +39,15 @@ struct PostingSettingsSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     settingsNumberField(
                         label: "Confessions posted so far",
-                        text: $draftPostedCount
+                        text: $draftPostedCount,
+                        isLoading: isFetchingPostedCount
                     )
+
+                    if let fetchError {
+                        Text(fetchError)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(AdminTheme.criticalForeground)
+                    }
 
                     settingsNumberField(
                         label: "Interval between posts (minutes)",
@@ -87,6 +97,7 @@ struct PostingSettingsSheet: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(SettingsActionButtonStyle(pressedBackground: AdminTheme.primaryPressed))
+                    .disabled(isFetchingPostedCount)
                 }
                 .padding(.top, 22)
             }
@@ -106,6 +117,9 @@ struct PostingSettingsSheet: View {
             draftPostedCount = String(store.postedCount)
             draftIntervalMinutes = String(store.intervalMinutes)
         }
+        .task {
+            await refetchPostedCountIfNeeded()
+        }
     }
 
     private var formattedLastPosted: String {
@@ -115,23 +129,55 @@ struct PostingSettingsSheet: View {
         return Self.lastPostedFormatter.string(from: lastPostedAt)
     }
 
-    private func settingsNumberField(label: String, text: Binding<String>) -> some View {
+    /// When local count is 0, pull the latest `#CVNL` number from recent Facebook posts.
+    private func refetchPostedCountIfNeeded() async {
+        guard store.postedCount == 0 else {
+            return
+        }
+
+        isFetchingPostedCount = true
+        fetchError = nil
+
+        do {
+            let count = try await store.ensurePostedCount(using: facebookAPI)
+            draftPostedCount = String(count)
+        } catch {
+            // Keep draft as 0 so the admin can type manually.
+            fetchError = "Could not load from Facebook. Enter the number manually."
+        }
+
+        isFetchingPostedCount = false
+    }
+
+    private func settingsNumberField(
+        label: String,
+        text: Binding<String>,
+        isLoading: Bool = false
+    ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(AdminTheme.textSecondary)
 
-            TextField("", text: text)
-                .keyboardType(.numberPad)
-                .font(.system(size: 15))
-                .foregroundStyle(AdminTheme.textPrimary)
-                .padding(.horizontal, 14)
-                .frame(height: 44)
-                .background(AdminTheme.background)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 11)
-                        .stroke(AdminTheme.border, lineWidth: 1)
-                )
+            HStack(spacing: 8) {
+                TextField("", text: text)
+                    .keyboardType(.numberPad)
+                    .font(.system(size: 15))
+                    .foregroundStyle(AdminTheme.textPrimary)
+                    .disabled(isLoading)
+
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 44)
+            .background(AdminTheme.background)
+            .overlay(
+                RoundedRectangle(cornerRadius: 11)
+                    .stroke(AdminTheme.border, lineWidth: 1)
+            )
         }
     }
 
