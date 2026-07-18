@@ -1,11 +1,13 @@
 import SwiftUI
 
 /// Shared top bar used across post-login admin screens.
-/// Matches the design mock: hamburger menu, screen title, user avatar.
+/// Matches the design mock: hamburger menu, screen title, settings gear, user avatar.
 struct AdminTopBar: View {
     let title: String
     let userInitial: String
     let onMenuTap: () -> Void
+
+    @State private var isSettingsPresented = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +28,20 @@ struct AdminTopBar: View {
                     .tracking(-0.3)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                // Settings gear — opens Posting settings (Confession list mockup).
+                Button {
+                    isSettingsPresented = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(AdminTheme.iconMuted)
+                        .frame(width: 38, height: 38)
+                        .background(Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(IconButtonStyle())
+                .accessibilityLabel("Posting settings")
+
                 Text(userInitial)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
@@ -40,6 +56,12 @@ struct AdminTopBar: View {
                 .overlay(AdminTheme.divider)
         }
         .background(AdminTheme.background)
+        .fullScreenCover(isPresented: $isSettingsPresented) {
+            PostingSettingsSheet(store: PostingSettingsStore.shared) {
+                isSettingsPresented = false
+            }
+            .presentationBackground(.clear)
+        }
     }
 }
 
