@@ -3,7 +3,8 @@ import Foundation
 /// Derives the latest confession number from Facebook page feed posts.
 enum LatestPostedNumberResolver {
     /// How many newest feed items to scan for `#CVNL` tags.
-    static let latestPostLimit = 5
+    /// Wider than a handful so non-confession posts between confessions do not hide the latest number.
+    static let latestPostLimit = 15
 
     /// Returns the maximum `#CVNL` number among the newest posts, or nil when none found.
     /// Assumes `items` are already sorted newest-first (see `FacebookAPI.getPageFeed`).

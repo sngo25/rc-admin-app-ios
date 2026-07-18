@@ -73,7 +73,7 @@ final class PostingSettingsStore {
         }
     }
 
-    /// Returns a non-zero `postedCount`, fetching it from the 5 newest Facebook posts when local is 0.
+    /// Returns a non-zero `postedCount`, fetching it from recent Facebook posts when local is 0.
     /// Leaves `postedCount` at 0 when the feed has no `#CVNL` tags.
     @MainActor
     func ensurePostedCount(using facebookAPI: FacebookAPI) async throws -> Int {
@@ -81,7 +81,20 @@ final class PostingSettingsStore {
             return postedCount
         }
 
+        return try await refreshPostedCount(using: facebookAPI)
+    }
+
+    /// Always syncs from Facebook: `postedCount = max(local, max #CVNL in recent feed)`.
+    /// Never lowers a higher local value. Returns the resulting `postedCount`.
+    @MainActor
+    func refreshPostedCount(using facebookAPI: FacebookAPI) async throws -> Int {
         let feed = try await facebookAPI.getPageFeed()
+        return refreshPostedCount(from: feed)
+    }
+
+    /// Same as the network refresh, but reuses an already-fetched feed (avoids a second request).
+    @discardableResult
+    func refreshPostedCount(from feed: [PageFeedItem]) -> Int {
         if let maxNumber = LatestPostedNumberResolver.maxConfessionNumber(from: feed) {
             noteAssignedNumber(maxNumber)
         }

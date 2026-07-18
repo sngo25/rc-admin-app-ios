@@ -37,16 +37,25 @@ struct PostingSettingsSheet: View {
                     .padding(.top, 4)
 
                 VStack(alignment: .leading, spacing: 16) {
-                    settingsNumberField(
-                        label: "Confessions posted so far",
-                        text: $draftPostedCount,
-                        isLoading: isFetchingPostedCount
-                    )
+                    // Posted count + explicit refresh so a stale local value can catch up to Facebook.
+                    VStack(alignment: .leading, spacing: 6) {
+                        settingsNumberField(
+                            label: "Confessions posted so far",
+                            text: $draftPostedCount,
+                            isLoading: isFetchingPostedCount,
+                            showsRefreshButton: true,
+                            onRefresh: {
+                                Task {
+                                    await refreshPostedCountFromFacebook()
+                                }
+                            }
+                        )
 
-                    if let fetchError {
-                        Text(fetchError)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(AdminTheme.criticalForeground)
+                        if let fetchError {
+                            Text(fetchError)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(AdminTheme.criticalForeground)
+                        }
                     }
 
                     settingsNumberField(
@@ -135,14 +144,24 @@ struct PostingSettingsSheet: View {
             return
         }
 
+        await refreshPostedCountFromFacebook(useBootstrap: true)
+    }
+
+    /// Force-sync from Facebook (Refresh button), or bootstrap-only when `useBootstrap` is true.
+    private func refreshPostedCountFromFacebook(useBootstrap: Bool = false) async {
         isFetchingPostedCount = true
         fetchError = nil
 
         do {
-            let count = try await store.ensurePostedCount(using: facebookAPI)
+            let count: Int
+            if useBootstrap {
+                count = try await store.ensurePostedCount(using: facebookAPI)
+            } else {
+                count = try await store.refreshPostedCount(using: facebookAPI)
+            }
             draftPostedCount = String(count)
         } catch {
-            // Keep draft as 0 so the admin can type manually.
+            // Keep the current draft so the admin can type manually.
             fetchError = "Could not load from Facebook. Enter the number manually."
         }
 
@@ -152,7 +171,9 @@ struct PostingSettingsSheet: View {
     private func settingsNumberField(
         label: String,
         text: Binding<String>,
-        isLoading: Bool = false
+        isLoading: Bool = false,
+        showsRefreshButton: Bool = false,
+        onRefresh: (() -> Void)? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
@@ -169,6 +190,15 @@ struct PostingSettingsSheet: View {
                 if isLoading {
                     ProgressView()
                         .controlSize(.small)
+                } else if showsRefreshButton, let onRefresh {
+                    // Explicit refresh — only raises local count to Facebook max when tapped.
+                    Button(action: onRefresh) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(AdminTheme.primary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Refresh from Facebook")
                 }
             }
             .padding(.horizontal, 14)

@@ -116,6 +116,8 @@ struct PostedToFacebookView: View {
 
         do {
             posts = try await authManager.facebookAPI.getPageFeed()
+            // Reuse this feed to bump "Confessions posted so far" without a second request.
+            PostingSettingsStore.shared.refreshPostedCount(from: posts)
             isLoading = false
         } catch {
             errorMessage = error.localizedDescription
