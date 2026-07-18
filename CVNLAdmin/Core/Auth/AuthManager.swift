@@ -12,6 +12,8 @@ enum AuthState: Equatable {
 @Observable
 final class AuthManager {
     private(set) var state: AuthState = .checking
+    /// One-shot notice for the login screen after session expiry (cleared when consumed).
+    private(set) var sessionExpiredMessage: String?
 
     private let authAPI: AuthAPI
     private let httpClient: HTTPClient
@@ -99,9 +101,18 @@ final class AuthManager {
 
     private func handleSessionExpired() {
         TokenStore.clearRefreshToken()
+        // Explain the redirect so the admin is not dumped on login without context.
+        sessionExpiredMessage = "Session expired. Sign in again."
         state = .unauthenticated
         Task {
             await AppBadgeManager.clear()
         }
+    }
+
+    /// Returns and clears the session-expired notice for the login form.
+    func consumeSessionExpiredMessage() -> String? {
+        let message = sessionExpiredMessage
+        sessionExpiredMessage = nil
+        return message
     }
 }

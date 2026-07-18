@@ -146,7 +146,7 @@ final class HTTPClient {
         }
 
         guard (200 ... 299).contains(httpResponse.statusCode) else {
-            throw APIError.httpStatus(httpResponse.statusCode)
+            throw apiError(fromFailureBody: data, statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -225,7 +225,7 @@ final class HTTPClient {
         }
 
         guard (200 ... 299).contains(httpResponse.statusCode) else {
-            throw APIError.httpStatus(httpResponse.statusCode)
+            throw apiError(fromFailureBody: data, statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -235,6 +235,27 @@ final class HTTPClient {
             logDecodeFailure(method: method, url: url, data: data, error: error)
             throw error
         }
+    }
+
+    /// Prefer server `error_message` on real HTTP failures; fall back to status code.
+    private func apiError(fromFailureBody data: Data, statusCode: Int) -> APIError {
+        if let envelope = try? decoder.decode(APIEnvelope<EmptyData>.self, from: data) {
+            let trimmed = envelope.errorMessage?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let trimmed, !trimmed.isEmpty {
+                return .server(code: envelope.errorCode, message: trimmed)
+            }
+        }
+
+        if let payload = try? decoder.decode(APIErrorBody.self, from: data) {
+            let trimmed = payload.errorMessage?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let trimmed, !trimmed.isEmpty {
+                return .server(code: payload.errorCode, message: trimmed)
+            }
+        }
+
+        return .httpStatus(statusCode)
     }
 
     private func logResponse(method: String, url: URL, statusCode: Int, data: Data) {
@@ -317,3 +338,14 @@ final class HTTPClient {
 }
 
 private struct EmptyData: Decodable {}
+
+/// Partial error body when the response is not a full success/error envelope.
+private struct APIErrorBody: Decodable {
+    let errorCode: Int?
+    let errorMessage: String?
+
+    enum CodingKeys: String, CodingKey {
+        case errorCode = "error_code"
+        case errorMessage = "error_message"
+    }
+}

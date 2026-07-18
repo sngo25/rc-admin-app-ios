@@ -3,6 +3,7 @@ import SwiftUI
 /// Lists Facebook page posts backed by GET /api/facebook/getPageFeed.
 struct PostedToFacebookView: View {
     @Environment(AuthManager.self) private var authManager
+    @Environment(AdminToast.self) private var toast
     @Environment(\.openURL) private var openURL
 
     let user: AdminUser
@@ -35,7 +36,11 @@ struct PostedToFacebookView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage {
-            errorState(message: errorMessage)
+            ErrorStateView(title: "Could not load posts", message: errorMessage) {
+                Task {
+                    await loadPosts()
+                }
+            }
         } else if posts.isEmpty {
             emptyState
         } else {
@@ -85,29 +90,6 @@ struct PostedToFacebookView: View {
         .padding(.vertical, 48)
     }
 
-    private func errorState(message: String) -> some View {
-        VStack(spacing: 12) {
-            Text("Could not load posts")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AdminTheme.emptyTitle)
-
-            Text(message)
-                .font(.system(size: 13))
-                .foregroundStyle(AdminTheme.textTertiary)
-                .multilineTextAlignment(.center)
-
-            Button("Retry") {
-                Task {
-                    await loadPosts()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 48)
-    }
-
     private func loadPosts(showLoading: Bool = true) async {
         if showLoading {
             isLoading = true
@@ -120,8 +102,13 @@ struct PostedToFacebookView: View {
             PostingSettingsStore.shared.refreshPostedCount(from: posts)
             isLoading = false
         } catch {
-            errorMessage = error.localizedDescription
             isLoading = false
+            // Soft refresh: keep stale list and toast. Cold load / empty: full-screen error.
+            if !showLoading && !posts.isEmpty {
+                toast.show(error.userFacingMessage)
+            } else {
+                errorMessage = error.userFacingMessage
+            }
         }
     }
 

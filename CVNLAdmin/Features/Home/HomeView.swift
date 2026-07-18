@@ -7,6 +7,8 @@ struct HomeView: View {
 
     @State private var destination: AdminDestination = .confessions
     @State private var isMenuPresented = false
+    /// Shared toast for mutation / soft-refresh errors across admin screens.
+    @State private var toast = AdminToast()
 
     var body: some View {
         Group {
@@ -21,6 +23,8 @@ struct HomeView: View {
                 PostedToFacebookView(user: user, onMenuTap: { isMenuPresented = true })
             }
         }
+        .environment(toast)
+        .adminToastOverlay()
         .sheet(isPresented: $isMenuPresented) {
             AdminMenuSheet(
                 selectedDestination: destination,

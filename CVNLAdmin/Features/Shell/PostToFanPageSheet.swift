@@ -188,7 +188,11 @@ struct PostToFanPageSheet: View {
             try? await Task.sleep(for: .milliseconds(700))
             onDismiss()
         } catch {
-            errorMessage = "Could not publish. Please try again."
+            // Prefer server/user-facing detail; fall back if the message is empty.
+            let detail = error.userFacingMessage
+            errorMessage = detail.isEmpty
+                ? "Could not publish. Please try again."
+                : detail
             isPublishing = false
         }
     }

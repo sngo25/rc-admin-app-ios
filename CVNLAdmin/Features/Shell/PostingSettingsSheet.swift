@@ -162,7 +162,7 @@ struct PostingSettingsSheet: View {
             draftPostedCount = String(count)
         } catch {
             // Keep the current draft so the admin can type manually.
-            fetchError = "Could not load from Facebook. Enter the number manually."
+            fetchError = "\(error.userFacingMessage) Enter the number manually."
         }
 
         isFetchingPostedCount = false

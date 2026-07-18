@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct LoginFormView: View {
+    @Environment(AuthManager.self) private var authManager
+
     let onSubmit: (String, String) async throws -> Void
 
     @State private var username = ""
@@ -65,6 +67,12 @@ struct LoginFormView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
         }
+        .onAppear {
+            // Show session-expiry notice once after AuthManager kicks the user to login.
+            if let notice = authManager.consumeSessionExpiredMessage() {
+                errorMessage = notice
+            }
+        }
     }
 
     @ViewBuilder
@@ -108,7 +116,7 @@ struct LoginFormView: View {
         do {
             try await onSubmit(username, password)
         } catch {
-            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            let message = error.userFacingMessage
             AppLogger.authError("Login form error: \(message)")
             errorMessage = message.isEmpty ? "Login failed" : message
         }

@@ -4,6 +4,7 @@ import UIKit
 /// Alerts & notifications screen backed by rc-admin-server APIs.
 struct AlertsView: View {
     @Environment(AuthManager.self) private var authManager
+    @Environment(AdminToast.self) private var toast
 
     let user: AdminUser
     let onMenuTap: () -> Void
@@ -55,7 +56,11 @@ struct AlertsView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage {
-            errorState(message: errorMessage)
+            ErrorStateView(title: "Could not load alerts", message: errorMessage) {
+                Task {
+                    await loadAlerts()
+                }
+            }
         } else if sortedAlerts.isEmpty {
             emptyState
         } else {
@@ -120,29 +125,6 @@ struct AlertsView: View {
         .padding(.vertical, 48)
     }
 
-    private func errorState(message: String) -> some View {
-        VStack(spacing: 12) {
-            Text("Could not load alerts")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AdminTheme.emptyTitle)
-
-            Text(message)
-                .font(.system(size: 13))
-                .foregroundStyle(AdminTheme.textTertiary)
-                .multilineTextAlignment(.center)
-
-            Button("Retry") {
-                Task {
-                    await loadAlerts()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 48)
-    }
-
     private func loadAlerts(showLoading: Bool = true) async {
         if showLoading {
             isLoading = true
@@ -153,8 +135,13 @@ struct AlertsView: View {
             alerts = try await authManager.alertsAPI.listAlerts()
             isLoading = false
         } catch {
-            errorMessage = error.localizedDescription
             isLoading = false
+            // Soft refresh: keep stale list and toast. Cold load / empty: full-screen error.
+            if !showLoading && !alerts.isEmpty {
+                toast.show(error.userFacingMessage)
+            } else {
+                errorMessage = error.userFacingMessage
+            }
         }
     }
 
@@ -163,7 +150,8 @@ struct AlertsView: View {
             let updated = try await authManager.alertsAPI.acknowledge(alertID: alertID)
             replaceAlert(updated)
         } catch {
-            errorMessage = error.localizedDescription
+            // Never route mutation failures into load errorMessage (that wipes the list).
+            toast.show(error.userFacingMessage)
         }
     }
 
@@ -172,7 +160,7 @@ struct AlertsView: View {
             do {
                 alerts = try await authManager.alertsAPI.acknowledgeAll()
             } catch {
-                errorMessage = error.localizedDescription
+                toast.show(error.userFacingMessage)
             }
         }
     }

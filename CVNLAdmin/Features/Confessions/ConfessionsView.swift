@@ -3,6 +3,7 @@ import SwiftUI
 /// Confession list: filter, pagination, approve/reject, number edit, post to Facebook.
 struct ConfessionsView: View {
     @Environment(AuthManager.self) private var authManager
+    @Environment(AdminToast.self) private var toast
 
     let user: AdminUser
     let onMenuTap: () -> Void
@@ -16,7 +17,6 @@ struct ConfessionsView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var postDraft: String?
-    @State private var actionError: String?
 
     private var totalPages: Int {
         max(1, Int(ceil(Double(total) / Double(ConfessionAPI.pageSize))))
@@ -71,14 +71,6 @@ struct ConfessionsView: View {
             }
             .presentationBackground(.clear)
         }
-        .alert("Could not update", isPresented: Binding(
-            get: { actionError != nil },
-            set: { if !$0 { actionError = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(actionError ?? "")
-        }
     }
 
     /// Reloads when page or filter changes.
@@ -131,7 +123,11 @@ struct ConfessionsView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage {
-            errorState(message: errorMessage)
+            ErrorStateView(title: "Could not load confessions", message: errorMessage) {
+                Task {
+                    await loadPage(page: currentPage)
+                }
+            }
         } else if items.isEmpty {
             emptyState
         } else {
@@ -184,29 +180,6 @@ struct ConfessionsView: View {
         .padding(.vertical, 48)
     }
 
-    private func errorState(message: String) -> some View {
-        VStack(spacing: 12) {
-            Text("Could not load confessions")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AdminTheme.emptyTitle)
-
-            Text(message)
-                .font(.system(size: 13))
-                .foregroundStyle(AdminTheme.textTertiary)
-                .multilineTextAlignment(.center)
-
-            Button("Retry") {
-                Task {
-                    await loadPage(page: currentPage)
-                }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 48)
-    }
-
     private var userInitial: String {
         let trimmed = user.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let first = trimmed.first else {
@@ -239,8 +212,13 @@ struct ConfessionsView: View {
             total = response.total
             isLoading = false
         } catch {
-            errorMessage = error.localizedDescription
             isLoading = false
+            // Soft refresh: keep stale list and toast. Cold load / empty: full-screen error.
+            if !showLoading && !items.isEmpty {
+                toast.show(error.userFacingMessage)
+            } else {
+                errorMessage = error.userFacingMessage
+            }
         }
     }
 
@@ -253,7 +231,7 @@ struct ConfessionsView: View {
             do {
                 _ = try await store.ensurePostedCount(using: authManager.facebookAPI)
             } catch {
-                actionError = error.localizedDescription
+                toast.show(error.userFacingMessage)
                 return
             }
         }
@@ -273,7 +251,7 @@ struct ConfessionsView: View {
             }
             store.noteAssignedNumber(assignedNumber)
         } catch {
-            actionError = error.localizedDescription
+            toast.show(error.userFacingMessage)
         }
     }
 
@@ -288,7 +266,7 @@ struct ConfessionsView: View {
                 confession.status = .rejected
             }
         } catch {
-            actionError = error.localizedDescription
+            toast.show(error.userFacingMessage)
         }
     }
 
@@ -304,7 +282,7 @@ struct ConfessionsView: View {
             }
             PostingSettingsStore.shared.noteAssignedNumber(number)
         } catch {
-            actionError = error.localizedDescription
+            toast.show(error.userFacingMessage)
         }
     }
 
