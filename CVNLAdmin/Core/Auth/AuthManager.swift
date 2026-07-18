@@ -17,6 +17,7 @@ final class AuthManager {
     private let httpClient: HTTPClient
     let alertsAPI: AlertsAPI
     let facebookAPI: FacebookAPI
+    let confessionAPI: ConfessionAPI
 
     init(authAPI: AuthAPI? = nil) {
         let httpClient = HTTPClient(baseURL: AppConfig.serverURL)
@@ -24,6 +25,7 @@ final class AuthManager {
         self.authAPI = authAPI ?? AuthAPI(httpClient: httpClient)
         self.alertsAPI = AlertsAPI(httpClient: httpClient)
         self.facebookAPI = FacebookAPI(httpClient: httpClient)
+        self.confessionAPI = ConfessionAPI(httpClient: httpClient)
 
         httpClient.onSessionExpired = { [weak self] in
             self?.handleSessionExpired()

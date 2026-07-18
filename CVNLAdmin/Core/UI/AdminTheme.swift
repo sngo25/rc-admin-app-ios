@@ -40,6 +40,15 @@ enum AdminTheme {
     static let infoForeground = Color(hex: 0x3E6DB5)
     static let successBackground = Color(hex: 0xE7F5EE)
     static let successForeground = Color(hex: 0x12875A)
+
+    // Confession list screen tokens (Confession list mockup).
+    static let filterBackground = Color(hex: 0xF0F0F3)
+    static let rejectBorder = Color(hex: 0xF0D2D2)
+    static let approveGreenPressed = Color(hex: 0x0F7350)
+    static let facebookBlue = Color(hex: 0x1877F2)
+    static let facebookBluePressed = Color(hex: 0x1465D8)
+    static let confessionBody = Color(hex: 0x26262B)
+    static let pagerDisabledText = Color(hex: 0xBDBDC4)
 }
 
 private extension Color {

@@ -66,6 +66,13 @@ final class PostingSettingsStore {
         self.intervalMinutes = max(1, intervalMinutes)
     }
 
+    /// Bumps `postedCount` when a confession number is assigned above the current max (web lastNumber).
+    func noteAssignedNumber(_ number: Int) {
+        if number > postedCount {
+            postedCount = number
+        }
+    }
+
     /// Records when a fan-page post was published or scheduled (web: setLastPublishTime).
     func recordPublish(at date: Date) {
         lastPostedAt = date

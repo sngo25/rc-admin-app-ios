@@ -4,7 +4,7 @@ Native iOS admin app for **Random Chat** (CVNL / Seeyu). This project is the iOS
 
 ## Status
 
-Early-stage SwiftUI app with auth infrastructure, login screen, Alerts & notifications screen, and Posted to Facebook screen with shared top bar and hamburger menu navigation. Feature parity with rc-admin-web is the long-term goal.
+Early-stage SwiftUI app with auth infrastructure, login screen, Alerts & notifications, Confessions, and Posted to Facebook screens with shared top bar and hamburger menu navigation. Feature parity with rc-admin-web is the long-term goal.
 
 ## Technology Stack
 
@@ -42,12 +42,13 @@ CVNLAdmin/
 │   ├── Auth/                   # AuthManager, TokenStore, UserRole
 │   ├── UI/                     # AdminTheme color tokens
 │   ├── PostingSettingsStore.swift  # Local confession posting settings (UserDefaults)
-│   └── Networking/             # HTTPClient, AuthAPI, AlertsAPI, FacebookAPI
+│   └── Networking/             # HTTPClient, AuthAPI, AlertsAPI, FacebookAPI, ConfessionAPI
 ├── Features/
 │   ├── Auth/                   # LoginView, LoginFormView, LoginBrandHeader, ForbiddenView
 │   ├── Root/                   # RootView (auth router)
 │   ├── Shell/                  # AdminTopBar, PostToFanPageSheet, PostingSettingsSheet, AdminMenuSheet, AdminDestination
 │   ├── Alerts/                 # AlertsView + alert card components
+│   ├── Confessions/            # ConfessionsView + filter, pagination, card components
 │   ├── PostedToFacebook/       # PostedToFacebookView + page feed card components
 │   └── Home/                   # Post-login shell (switches screens via menu)
 └── Assets.xcassets/
@@ -112,6 +113,22 @@ The post-login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-
 - Empty inbox shows "All caught up" until alerts are created server-side
 - Default post-login screen; switch to other screens via the hamburger menu
 
+## Confessions screen
+
+The screen follows the CVNL Admin design mock (`mockups/Confession list (standalone).html`):
+
+- **Admin only** — same gate as Alerts
+- Shared top bar: hamburger menu, screen title, compose, settings gear, purple user avatar initial
+- Status filter (All / Pending / Approved / Rejected) + reload, with offset pagination (page size 20)
+- Cards show `#number` (editable), created time, content, and status-specific actions:
+  - **Pending**: Reject / Approve (approve assigns next number from local `PostingSettingsStore.postedCount` when unset)
+  - **Approved**: Approved chip + **Post to Facebook** (when numbered) via `PostToFanPageSheet` with web `buildPost` content
+  - **Rejected**: Rejected chip
+- Data from `GET /api/confessions`; updates via `POST /api/confessions/:id`
+- Posted / Not posted chips are **not** shown (no `posted` field on the confession API)
+- Approving/rejecting updates the card in place until reload or filter/page change
+- Reachable from the hamburger menu (Alerts remains the default home screen)
+
 ## Posted to Facebook screen
 
 The screen follows the CVNL Admin design mock (`mockups/Posted to Facebook (standalone).html`):
@@ -139,8 +156,9 @@ The screen follows the CVNL Admin design mock (`mockups/Posted to Facebook (stan
 The hamburger menu (`AdminMenuSheet`) lists:
 
 1. Alerts & notifications
-2. Posted to Facebook
-3. Logout
+2. Confessions
+3. Posted to Facebook
+4. Logout
 
 Selecting a screen dismisses the sheet and switches `HomeView` destination.
 

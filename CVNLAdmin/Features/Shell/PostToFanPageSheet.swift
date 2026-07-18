@@ -5,6 +5,8 @@ import SwiftUI
 struct PostToFanPageSheet: View {
     let facebookAPI: FacebookAPI
     let store: PostingSettingsStore
+    /// Prefills the post content (e.g. from an approved confession card).
+    var initialMessage: String = ""
     let onDismiss: () -> Void
 
     @State private var message = ""
@@ -13,6 +15,7 @@ struct PostToFanPageSheet: View {
     @State private var isPublishing = false
     @State private var errorMessage: String?
     @State private var didSucceed = false
+    @State private var didSeedMessage = false
 
     private var canPublish: Bool {
         !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isPublishing && !didSucceed
@@ -34,7 +37,20 @@ struct PostToFanPageSheet: View {
             dialogCard
         }
         .onAppear {
+            seedInitialMessageIfNeeded()
             seedScheduleFromSettings()
+        }
+    }
+
+    /// Apply card prefill once so edits are not overwritten.
+    private func seedInitialMessageIfNeeded() {
+        guard !didSeedMessage else {
+            return
+        }
+
+        didSeedMessage = true
+        if !initialMessage.isEmpty {
+            message = initialMessage
         }
     }
 

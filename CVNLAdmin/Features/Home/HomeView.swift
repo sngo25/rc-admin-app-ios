@@ -14,6 +14,9 @@ struct HomeView: View {
             case .alerts:
                 AlertsView(user: user, onMenuTap: { isMenuPresented = true })
 
+            case .confessions:
+                ConfessionsView(user: user, onMenuTap: { isMenuPresented = true })
+
             case .postedToFacebook:
                 PostedToFacebookView(user: user, onMenuTap: { isMenuPresented = true })
             }
