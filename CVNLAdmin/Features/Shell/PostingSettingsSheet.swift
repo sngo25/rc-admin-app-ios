@@ -138,9 +138,9 @@ struct PostingSettingsSheet: View {
         return Self.lastPostedFormatter.string(from: lastPostedAt)
     }
 
-    /// When local count is 0, pull the latest `#CVNL` number from recent Facebook posts.
+    /// When local count is 0 or last-posted time is unset, pull both from recent Facebook posts.
     private func refetchPostedCountIfNeeded() async {
-        guard store.postedCount == 0 else {
+        guard store.postedCount == 0 || store.lastPostedAt == nil else {
             return
         }
 

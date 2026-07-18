@@ -73,18 +73,30 @@ final class PostingSettingsStore {
         }
     }
 
-    /// Returns a non-zero `postedCount`, fetching it from recent Facebook posts when local is 0.
-    /// Leaves `postedCount` at 0 when the feed has no `#CVNL` tags.
+    /// Raises `lastPostedAt` when the resolved feed time is newer (or local is unset).
+    /// Never lowers a newer local value — same monotonic rule as `noteAssignedNumber`.
+    func noteLastPostedAt(_ date: Date) {
+        if let current = lastPostedAt {
+            lastPostedAt = max(current, date)
+        } else {
+            lastPostedAt = date
+        }
+    }
+
+    /// Fetches from Facebook when local `postedCount` is 0 or `lastPostedAt` is unset.
+    /// Leaves values unchanged when the feed has no `#CVNL` tags.
     @MainActor
     func ensurePostedCount(using facebookAPI: FacebookAPI) async throws -> Int {
-        if postedCount > 0 {
+        // Bootstrap either missing field; a set count alone must not skip last-posted sync.
+        if postedCount > 0 && lastPostedAt != nil {
             return postedCount
         }
 
         return try await refreshPostedCount(using: facebookAPI)
     }
 
-    /// Always syncs from Facebook: `postedCount = max(local, max #CVNL in recent feed)`.
+    /// Always syncs from Facebook: `postedCount = max(local, max #CVNL in recent feed)`,
+    /// and `lastPostedAt = max(local, newest #CVNL post createdTime)`.
     /// Never lowers a higher local value. Returns the resulting `postedCount`.
     @MainActor
     func refreshPostedCount(using facebookAPI: FacebookAPI) async throws -> Int {
@@ -97,6 +109,11 @@ final class PostingSettingsStore {
     func refreshPostedCount(from feed: [PageFeedItem]) -> Int {
         if let maxNumber = LatestPostedNumberResolver.maxConfessionNumber(from: feed) {
             noteAssignedNumber(maxNumber)
+        }
+
+        // Same feed pass also refreshes "Last posted at" for settings / schedule spacing.
+        if let latestAt = LatestPostedNumberResolver.latestPostedAt(from: feed) {
+            noteLastPostedAt(latestAt)
         }
 
         return postedCount
