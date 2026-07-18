@@ -65,4 +65,19 @@ final class PostingSettingsStore {
         self.postedCount = max(0, postedCount)
         self.intervalMinutes = max(1, intervalMinutes)
     }
+
+    /// Records when a fan-page post was published or scheduled (web: setLastPublishTime).
+    func recordPublish(at date: Date) {
+        lastPostedAt = date
+    }
+
+    /// Next allowed publish time based on last post + interval, if still in the future.
+    var suggestedScheduleDate: Date? {
+        guard let lastPostedAt else {
+            return nil
+        }
+
+        let next = lastPostedAt.addingTimeInterval(TimeInterval(intervalMinutes * 60))
+        return next > Date() ? next : nil
+    }
 }

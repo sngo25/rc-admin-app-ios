@@ -4,7 +4,7 @@ Native iOS admin app for **Random Chat** (CVNL / Seeyu). This project is the iOS
 
 ## Status
 
-Early-stage SwiftUI app with auth infrastructure, login screen, and an Alerts & notifications mock screen with shared top bar. Feature parity with rc-admin-web is the long-term goal.
+Early-stage SwiftUI app with auth infrastructure, login screen, Alerts & notifications screen, and Posted to Facebook screen with shared top bar and hamburger menu navigation. Feature parity with rc-admin-web is the long-term goal.
 
 ## Technology Stack
 
@@ -41,13 +41,15 @@ CVNLAdmin/
 │   ├── Models/                 # AdminUser, APIEnvelope, AuthTokens
 │   ├── Auth/                   # AuthManager, TokenStore, UserRole
 │   ├── UI/                     # AdminTheme color tokens
-│   └── Networking/             # HTTPClient, AuthAPI
+│   ├── PostingSettingsStore.swift  # Local confession posting settings (UserDefaults)
+│   └── Networking/             # HTTPClient, AuthAPI, AlertsAPI, FacebookAPI
 ├── Features/
 │   ├── Auth/                   # LoginView, LoginFormView, LoginBrandHeader, ForbiddenView
 │   ├── Root/                   # RootView (auth router)
-│   ├── Shell/                  # AdminTopBar (shared post-login chrome)
-│   ├── Alerts/                 # AlertsView mock screen + alert card components
-│   └── Home/                   # Post-login shell (hosts AlertsView)
+│   ├── Shell/                  # AdminTopBar, PostToFanPageSheet, PostingSettingsSheet, AdminMenuSheet, AdminDestination
+│   ├── Alerts/                 # AlertsView + alert card components
+│   ├── PostedToFacebook/       # PostedToFacebookView + page feed card components
+│   └── Home/                   # Post-login shell (switches screens via menu)
 └── Assets.xcassets/
 Config/
 ├── Debug.xcconfig              # localhost server URL (simulator default)
@@ -101,13 +103,46 @@ The login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-s
 The post-login screen follows the CVNL Admin design mock (`rc-agents/docs/admin-app-standalone-2.html`):
 
 - **Admin only** — moderators see ForbiddenView after login
-- Shared top bar: hamburger menu, screen title, purple user avatar initial
+- Shared top bar: hamburger menu, screen title, compose, settings gear, purple user avatar initial
+- Settings gear opens **Posting settings** (confessions posted so far, interval minutes, last posted at) — local until Confession publish lands on iOS
 - Summary row: unacknowledged count chip and "Acknowledge all" action
 - **App icon badge** syncs to the same unacknowledged count via `AppBadgeManager` (updates on load, push, foreground resume, and acknowledge; cleared on logout)
 - Alert cards with severity chips (Critical / Warning / Info), acknowledge CTA, and acknowledged metadata
 - Data from `GET /api/alerts`; acknowledge via `POST /api/alerts/:id/acknowledge` and `POST /api/alerts/acknowledge-all`
 - Empty inbox shows "All caught up" until alerts are created server-side
-- Menu sheet exposes Logout until a full navigation drawer is designed
+- Default post-login screen; switch to other screens via the hamburger menu
+
+## Posted to Facebook screen
+
+The screen follows the CVNL Admin design mock (`mockups/Posted to Facebook (standalone).html`):
+
+- **Admin only** — same gate as Alerts
+- Shared top bar: hamburger menu, screen title, compose, settings gear, purple user avatar initial
+- Card list of Facebook page posts with `#CVNL{number}` tag chip, full post body, posted time, and **View on page** button
+- Data from `GET /api/facebook/getPageFeed` (same endpoint as rc-admin-web Posts page)
+- **View on page** opens the Facebook permalink in Safari
+- Pull-to-refresh reloads the feed
+- Reachable from the hamburger menu (Alerts remains the default home screen)
+
+## Shared top bar
+
+`AdminTopBar` is used on all post-login screens:
+
+- Hamburger opens the navigation menu
+- Screen title
+- Purple compose icon opens **Post to fan page** (`PostToFanPageSheet`) — publishes via `POST /api/facebook/postToPage` (optional schedule; updates `PostingSettingsStore.lastPostedAt`)
+- Settings gear opens **Posting settings** (`PostingSettingsSheet`) — local UserDefaults via `PostingSettingsStore` (same fields as rc-admin-web header settings)
+- Purple avatar with the user’s initial
+
+## Navigation menu
+
+The hamburger menu (`AdminMenuSheet`) lists:
+
+1. Alerts & notifications
+2. Posted to Facebook
+3. Logout
+
+Selecting a screen dismisses the sheet and switches `HomeView` destination.
 
 **Troubleshooting**
 

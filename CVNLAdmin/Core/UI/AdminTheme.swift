@@ -18,10 +18,13 @@ enum AdminTheme {
     static let bodySecondary = Color(hex: 0x5C5C64)
     static let iconMuted = Color(hex: 0x43434B)
     static let iconButtonHover = Color(hex: 0xF2F2F5)
-    // Posting settings dialog (Confession list mockup).
+    // Posting settings / Post to fan page dialogs (Confession list mockup).
     static let settingsCancelBackground = Color(hex: 0xF3F3F5)
     static let settingsCancelBackgroundPressed = Color(hex: 0xE9E9EC)
     static let settingsBackdrop = Color(red: 20 / 255, green: 20 / 255, blue: 28 / 255)
+    static let scheduleCheckboxBorder = Color(hex: 0xCFCFD6)
+    static let scheduleCheckboxLabel = Color(hex: 0x26262B)
+    static let scheduleDateDisabled = Color(hex: 0xB4B4BB)
     static let ackAllBackground = Color(hex: 0xF1EEFB)
     static let ackAllBackgroundPressed = Color(hex: 0xE8E2F8)
     static let cardBorder = Color(hex: 0xECECEF)

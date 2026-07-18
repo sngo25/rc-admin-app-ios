@@ -1,28 +1,23 @@
 import SwiftUI
-import UIKit
 
-/// Alerts & notifications screen backed by rc-admin-server APIs.
-struct AlertsView: View {
+/// Lists Facebook page posts backed by GET /api/facebook/getPageFeed.
+struct PostedToFacebookView: View {
     @Environment(AuthManager.self) private var authManager
+    @Environment(\.openURL) private var openURL
 
     let user: AdminUser
     let onMenuTap: () -> Void
 
-    @State private var alerts: [AlertItem] = []
+    @State private var posts: [PageFeedItem] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
             AdminTopBar(
-                title: "Alerts & notifications",
+                title: "Posted to Facebook",
                 userInitial: userInitial,
                 onMenuTap: onMenuTap
-            )
-
-            AlertsSummaryBar(
-                unacknowledgedCount: unacknowledgedCount,
-                onAcknowledgeAll: acknowledgeAll
             )
 
             content
@@ -30,22 +25,7 @@ struct AlertsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AdminTheme.screenBackground)
         .task {
-            await loadAlerts()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .adminAlertReceived)) { _ in
-            Task {
-                await loadAlerts(showLoading: false)
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            Task {
-                await loadAlerts(showLoading: false)
-            }
-        }
-        .onChange(of: unacknowledgedCount) { _, newCount in
-            Task {
-                await AppBadgeManager.sync(count: newCount)
-            }
+            await loadPosts()
         }
     }
 
@@ -56,10 +36,10 @@ struct AlertsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage {
             errorState(message: errorMessage)
-        } else if sortedAlerts.isEmpty {
+        } else if posts.isEmpty {
             emptyState
         } else {
-            alertList
+            postList
         }
     }
 
@@ -72,46 +52,31 @@ struct AlertsView: View {
         return String(first).uppercased()
     }
 
-    private var unacknowledgedCount: Int {
-        alerts.filter { !$0.isAcknowledged }.count
-    }
-
-    private var sortedAlerts: [AlertItem] {
-        alerts.sorted {
-            let left = $0.sortKey()
-            let right = $1.sortKey()
-            if left.0 != right.0 {
-                return left.0 < right.0
-            }
-
-            return left.1 > right.1
-        }
-    }
-
-    private var alertList: some View {
+    private var postList: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                ForEach(sortedAlerts) { alert in
-                    AlertCardView(alert: alert) {
-                        Task {
-                            await acknowledge(alertID: alert.id)
-                        }
-                    }
+                ForEach(posts) { post in
+                    PostedToFacebookCardView(item: post, onViewOnPage: {
+                        openPost(post)
+                    })
                 }
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
             .padding(.bottom, 40)
         }
+        .refreshable {
+            await loadPosts(showLoading: false)
+        }
     }
 
     private var emptyState: some View {
         VStack(spacing: 4) {
-            Text("All caught up")
+            Text("No posts yet")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(AdminTheme.emptyTitle)
 
-            Text("No alerts need attention.")
+            Text("Facebook page posts will appear here.")
                 .font(.system(size: 13))
                 .foregroundStyle(AdminTheme.textTertiary)
         }
@@ -122,7 +87,7 @@ struct AlertsView: View {
 
     private func errorState(message: String) -> some View {
         VStack(spacing: 12) {
-            Text("Could not load alerts")
+            Text("Could not load posts")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(AdminTheme.emptyTitle)
 
@@ -133,7 +98,7 @@ struct AlertsView: View {
 
             Button("Retry") {
                 Task {
-                    await loadAlerts()
+                    await loadPosts()
                 }
             }
             .buttonStyle(.borderedProminent)
@@ -143,14 +108,14 @@ struct AlertsView: View {
         .padding(.vertical, 48)
     }
 
-    private func loadAlerts(showLoading: Bool = true) async {
+    private func loadPosts(showLoading: Bool = true) async {
         if showLoading {
             isLoading = true
         }
         errorMessage = nil
 
         do {
-            alerts = try await authManager.alertsAPI.listAlerts()
+            posts = try await authManager.facebookAPI.getPageFeed()
             isLoading = false
         } catch {
             errorMessage = error.localizedDescription
@@ -158,28 +123,13 @@ struct AlertsView: View {
         }
     }
 
-    private func acknowledge(alertID: String) async {
-        do {
-            let updated = try await authManager.alertsAPI.acknowledge(alertID: alertID)
-            replaceAlert(updated)
-        } catch {
-            errorMessage = error.localizedDescription
+    private func openPost(_ post: PageFeedItem) {
+        guard let urlString = post.permalinkUrl,
+              let url = URL(string: urlString)
+        else {
+            return
         }
-    }
 
-    private func acknowledgeAll() {
-        Task {
-            do {
-                alerts = try await authManager.alertsAPI.acknowledgeAll()
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func replaceAlert(_ updated: AlertItem) {
-        alerts = alerts.map { alert in
-            alert.id == updated.id ? updated : alert
-        }
+        openURL(url)
     }
 }
